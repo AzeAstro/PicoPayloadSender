@@ -4,6 +4,7 @@ import socket
 from PyQt6.QtGui import QIcon
 import traceback
 from Keycode import Keycode
+from struct import pack
 
 from ui.PayloadSenderUI_ui import Ui_PayloadSender
 
@@ -44,8 +45,6 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
         self.connected=False
         self.setWindowIcon(QIcon('ui/icon.png'))
 
-    
-    
     def payloadParts(self,value:bool):
         value=not value
         self.sendPayloadButton.setDisabled(value)
@@ -57,22 +56,26 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
             self.payloadTextEdit.setPlaceholderText("Enter duckyscript to send.")
 
 
+    def generatePayloadPack(self,payload:str):
+        return pack("l",len(payload)), payload.encode()
+
+
+    def sendText(self,text:str):
+        length,payload=self.generatePayloadPack(text)
+        try:
+            self.socket.send(length)
+            self.socket.send(payload)
+            return True
+        except:
+            return False
+        
+
     def selectConnectionAction(self):
         if self.connected:
             self.disconnectFromPico()
             self.connectionButton.setText("Connect")
         elif self.connected==False:
             self.connectToPico()
-
-
-    def disconnectFromPico(self):
-        self.socket.send("!disconnect".encode())
-        self.socket.close()
-        self.payloadStatusLabel.setText("Payload status: None")
-        self.connectionStatusLabel.setText("Connection status: Disconnected")
-        self.connected=False
-        self.payloadParts(False)
-
 
 
 
@@ -93,20 +96,10 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
             print(traceback.format_exc())
             self.connectionStatusLabel.setText("Connection status: Failed")
 
-
-    def stopPico(self):
-        self.socket.send("!stop".encode())
-        self.connectionStatusLabel.setText("Connection status: Disconnected")
-        self.payloadStatusLabel.setText("Payload status: None")
-        self.connectionButton.setText("Connect")
-        self.payloadParts(False)
-        self.connected=False
-        self.socket.close()
-
     def sendPayload(self):
         payloadText=self.payloadTextEdit.toPlainText()
         if self.checkPayload(payloadText):
-            self.socket.send(payloadText.encode())
+            self.sendText(payloadText)
             self.payloadStatusLabel.setText("Payload status: Sent")
         else:
             dlg = QMessageBox(self)
@@ -116,6 +109,27 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
             dlg.setWindowIcon(QIcon('ui/icon.png'))
             dlg.setIcon(QMessageBox.Icon.Critical)
             dlg.exec()
+
+
+    def disconnectFromPico(self):
+        self.sendText("!disconnect")
+        self.socket.close()
+        self.payloadStatusLabel.setText("Payload status: None")
+        self.connectionStatusLabel.setText("Connection status: Disconnected")
+        self.connected=False
+        self.payloadParts(False)
+
+    def stopPico(self):
+        self.sendText("!stop")
+        self.connectionStatusLabel.setText("Connection status: Disconnected")
+        self.payloadStatusLabel.setText("Payload status: None")
+        self.connectionButton.setText("Connect")
+        self.payloadParts(False)
+        self.connected=False
+        self.socket.close()
+
+    
+
 
 
 
@@ -137,6 +151,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
         for line in payloadLines:
             if(line[0:3] == "REM"):
                 pass
+            elif(line[0:6]=="REPEAT"):
+                try:
+                    int(line[6:])
+                except:
+                    return False
             elif(line[0:5] == "DELAY"):
                 try:
                     float(line[6:])/1000
