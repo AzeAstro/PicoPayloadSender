@@ -184,7 +184,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
                 if line.replace("MOUSE_CLICK","",1).strip() not in validMouseButtonStringList:
                     print(line)
                     return False
-            elif(line[0:13]=="MOUSE_RELEASE"):
+            elif(line[0:13]=="MOUSE_RELEASE "):
                 if line.replace("MOUSE_RELEASE","",1).strip() not in validMouseButtonStringList:
                     print(line)
                     return False
