@@ -31,13 +31,12 @@ duckyCommands = {
     'F12': Keycode.F12,
 }
 
+validMouseButtonStringList=["RIGHT_BUTTON","LEFT_BUTTON","MIDDLE_BUTTON"]
 
 class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
     def __init__(self) -> None:
         super(MainWindow, self).__init__(None)
         self.setupUi(self)
-        self.socket=socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-        self.socket.settimeout(3)
         self.connectionButton.clicked.connect(self.selectConnectionAction)
         self.sendPayloadButton.clicked.connect(self.sendPayload)
         self.stopPicoButton.clicked.connect(self.stopPico)
@@ -155,11 +154,13 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
                 try:
                     int(line[6:])
                 except:
+                    print(line)
                     return False
             elif(line[0:5] == "DELAY"):
                 try:
                     float(line[6:])/1000
                 except:
+                    print(line)
                     return False
             elif(line[0:6] == "STRING"):
                 pass
@@ -167,14 +168,46 @@ class MainWindow(QtWidgets.QMainWindow, Ui_PayloadSender):
                 try:
                     int(line[14:]) * 10
                 except:
+                    print(line)
                     return False
             elif(line[0:12] == "DEFAULTDELAY"):
                 try:
                     int(line[13:]) * 10
                 except:
+                    print(line)
                     return False
+            elif(line[0:10]=="MOUSE_HOLD"):
+                if line.replace("MOUSE_HOLD","",1).strip() not in validMouseButtonStringList:
+                    print(line)
+                    return False
+            elif(line[0:11]=="MOUSE_CLICK"):
+                if line.replace("MOUSE_CLICK","",1).strip() not in validMouseButtonStringList:
+                    print(line)
+                    return False
+            elif(line[0:13]=="MOUSE_RELEASE"):
+                if line.replace("MOUSE_RELEASE","",1).strip() not in validMouseButtonStringList:
+                    print(line)
+                    return False
+            elif(line[0:11]=="MOUSE_WHEEL"):
+                try:
+                    int(line.replace("MOUSE_WHEEL","",1).strip())
+                except:
+                    print(line)
+                    return False
+            elif(line[0:10]=="MOUSE_MOVE"):
+                examine=line.replace("MOUSE_MOVE","",1).strip()
+                try:
+                    examine=examine.split(" ")
+                    int(examine[0])
+                    int(examine[1])
+                except ValueError:
+                    print(line)
+                    return False
+            elif(line[0:17]=="MOUSE_RELEASE_ALL"):
+                pass
             else:
                 if self.checkLine(line)!=True:
+                    print(line)
                     return False
         return True
 
