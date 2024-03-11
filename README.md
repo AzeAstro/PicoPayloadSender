@@ -24,11 +24,3 @@ Disconnect sends `!disconnect` command to pico and pico TCP server still runs in
 
 
 Simple as this
-
-
-## Donations
-If you really want to send donation contact me. (No matter how much. Anything that is 1 USD or higher is accepted.)  
-Social media accounts:
-
-Instagram: [@atlas_c0](https://www.instagram.com/atlas_c0/)  
-Discord: @atlas_c0
